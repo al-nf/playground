@@ -7,6 +7,12 @@ import
 )
 
 func main () {
+
+    app, err := firebase.NewApp(context.Background(), nil)
+    if err != nil {
+        log.Fatalf("error initializing app: %v\n", err)
+    }
+
     mux := &http.ServeMux{}
 
     mux.HandleFunc("/id/{id}", identify)
