@@ -1,31 +1,53 @@
 package main
 
-import
-(
-    "fmt"
-    "net/http"
+import (
+	"context"
+	"fmt"
+	http "net/http"
+
+	// "cloud.google.com/go/firestore"
+	firebase "firebase.google.com/go/v4"
+	"google.golang.org/api/option"
 )
 
-func main () {
+var ctx context.Context = context.Background()
+var opt option.ClientOption = option.WithCredentialsFile("test-go.json")
 
-    app, err := firebase.NewApp(context.Background(), nil)
-    if err != nil {
-        log.Fatalf("error initializing app: %v\n", err)
-    }
+func main() {
 
-    mux := &http.ServeMux{}
+	mux := &http.ServeMux{}
 
-    mux.HandleFunc("/id/{id}", identify)
-    mux.HandleFunc("/", helloworld)
+	mux.HandleFunc("/id/{id}", identify)
+	mux.HandleFunc("/", helloworld)
+	mux.HandleFunc("/lib", read_library)
 
-    http.ListenAndServe(":8080", mux)
+	http.ListenAndServe(":8080", mux)
 }
 
-func identify (w http.ResponseWriter, r *http.Request) {
-    id := r.PathValue("id")
-    fmt.Fprintln(w, "Path id:", id)
+func read_library(w http.ResponseWriter, r *http.Request) {
+	app, err := firebase.NewApp(ctx, nil, opt)
+	if err != nil {
+		fmt.Fprintln(w, "something went wrong", err)
+	}
+
+	client, err := app.Firestore(ctx)
+	if err != nil {
+		fmt.Fprintln(w, "something went wrong", err)
+	}
+
+	iter := client.Collection("libraries").Doc("library")
+	data, err := iter.Get(ctx)
+	if err != nil {
+		fmt.Fprintln(w, "something went wrong", err)
+	}
+	fmt.Fprintln(w, "lib?", data.Data())
 }
 
-func helloworld (w http.ResponseWriter, r *http.Request) {
-    fmt.Fprintln(w, "Hello World!")
+func identify(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	fmt.Fprintln(w, "Path id:", id)
+}
+
+func helloworld(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, "Hello World!")
 }
