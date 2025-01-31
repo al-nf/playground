@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
+    "strings"
     json "encoding/json"
 	http "net/http"
+
 
 	// "cloud.google.com/go/firestore"
 	firebase "firebase.google.com/go/v4"
@@ -19,13 +21,57 @@ func main() {
 
 	mux := &http.ServeMux{}
 
-	mux.HandleFunc("/id/{id}", identify)
 	mux.HandleFunc("/", helloWorld)
+	mux.HandleFunc("/auth", authenticateUser)
 	mux.HandleFunc("/animals", getAnimals)
+	mux.HandleFunc("/id/{id}", identify)
 
 	http.ListenAndServe(":8080", mux)
 }
 
+func helloWorld(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, "Hello World!")
+}
+
+func authenticateUser(w http.ResponseWriter, r *http.Request) {
+    app, err := firebase.NewApp(ctx, nil, opt)
+	if err != nil {
+		http.Error(w, "Failed to initialize Firebase app", http.StatusInternalServerError)
+		return
+	}
+
+	authClient, err := app.Auth(ctx)
+	if err != nil {
+		http.Error(w, "Failed to get Firebase auth client", http.StatusInternalServerError)
+		return
+	}
+
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		http.Error(w, "Authorization header missing", http.StatusUnauthorized)
+		return
+	}
+
+	idToken := strings.TrimPrefix(authHeader, "Bearer ")
+	if idToken == authHeader { 
+		http.Error(w, "Invalid authorization token format", http.StatusUnauthorized)
+		return
+	}
+
+	token, err := authClient.VerifyIDToken(ctx, idToken)
+	if err != nil {
+		http.Error(w, "Invalid or expired ID token", http.StatusUnauthorized)
+		return
+	}
+
+	resp := map[string]interface{}{
+		"uid":   token.UID,
+		"email": token.Claims["email"],
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
+}
 
 func getAnimals(w http.ResponseWriter, r *http.Request) {
 	app, err := firebase.NewApp(ctx, nil, opt)
@@ -79,6 +125,3 @@ func identify(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Path id:", id)
 }
 
-func helloWorld(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "Hello World!")
-}
