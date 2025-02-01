@@ -53,7 +53,7 @@ func authenticateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	idToken := strings.TrimPrefix(authHeader, "Bearer ")
-	if idToken == authHeader { 
+	if idToken == authHeader {
 		http.Error(w, "Invalid authorization token format", http.StatusUnauthorized)
 		return
 	}
@@ -64,9 +64,33 @@ func authenticateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	uid := token.UID
+	email, _ := token.Claims["email"].(string)
+
+	client, err := app.Firestore(ctx)
+	if err != nil {
+		http.Error(w, "Failed to initialize Firestore client", http.StatusInternalServerError)
+		return
+	}
+	defer client.Close()
+
+	userRef := client.Collection("users").Doc(uid)
+	doc, err := userRef.Get(ctx)
+
+	if err != nil || !doc.Exists() {
+		_, err = userRef.Set(ctx, map[string]interface{}{
+			"uid":       uid,
+			"email":     email,
+		})
+		if err != nil {
+			http.Error(w, "Failed to save user to Firestore", http.StatusInternalServerError)
+			return
+		}
+	}
+
 	resp := map[string]interface{}{
-		"uid":   token.UID,
-		"email": token.Claims["email"],
+		"uid":   uid,
+		"email": email,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
