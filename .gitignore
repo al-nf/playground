@@ -1,0 +1,6 @@
+api
+api.exe
+test-go.json
+*node_modules
+.vite
+.vscode
