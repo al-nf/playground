@@ -60,6 +60,7 @@ func authenticateUser(w http.ResponseWriter, r *http.Request) {
 
 	token, err := authClient.VerifyIDToken(ctx, idToken)
 	if err != nil {
+		fmt.Println("Error: ", err.Error(), "Token: ", token)
 		http.Error(w, "Invalid or expired ID token", http.StatusUnauthorized)
 		return
 	}

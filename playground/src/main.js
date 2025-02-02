@@ -27,7 +27,8 @@ document.getElementById("login").addEventListener("click", () => {
             // IdP data available using getAdditionalUserInfo(result)
             console.log(credential,token,user);
             document.getElementById("msg").innerText = "Hi, " + user.displayName;
-            fetch()
+            sendToken(user.auth.accessToken);
+            // fetch()
         }).catch((error) => {
             console.log("oh naur");
             // Handle Errors here.
@@ -41,3 +42,20 @@ document.getElementById("login").addEventListener("click", () => {
             // ...
         });
     });
+
+async function sendToken(token) {
+  const url = "https://localhost:8080";
+
+  var myHeaders = new Headers();
+  myHeaders.append("Authorization", "Bearer "+token);
+
+  var requestOptions = {
+    method: 'POST',
+    headers: myHeaders,
+    redirect: 'follow'
+  };
+  const response = await fetch("http://localhost:8080/auth", requestOptions)
+    .then(response => response.text())
+    .then(result => console.log(result))
+    .catch(error => console.log('error', error));
+}
