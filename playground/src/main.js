@@ -18,7 +18,7 @@ const provider = new GoogleAuthProvider();
 document.getElementById("login").addEventListener("click", () => {
     console.log("button");
     signInWithPopup(auth, provider)
-        .then((result) => {
+        .then(async (result) => {
             // This gives you a Google Access Token. You can use it to access the Google API.
             const credential = GoogleAuthProvider.credentialFromResult(result);
             const token = credential.accessToken;
@@ -27,7 +27,8 @@ document.getElementById("login").addEventListener("click", () => {
             // IdP data available using getAdditionalUserInfo(result)
             console.log(credential,token,user);
             document.getElementById("msg").innerText = "Hi, " + user.displayName;
-            sendToken(user.auth.accessToken);
+            const idToken = await user.getIdToken();
+            sendToken(idToken);
             // fetch()
         }).catch((error) => {
             console.log("oh naur");
@@ -44,7 +45,7 @@ document.getElementById("login").addEventListener("click", () => {
     });
 
 async function sendToken(token) {
-  const url = "https://localhost:8080";
+  const url = "http://localhost:8080";
 
   var myHeaders = new Headers();
   myHeaders.append("Authorization", "Bearer "+token);
