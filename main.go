@@ -12,6 +12,7 @@ import (
 	firebase "firebase.google.com/go/v4"
 	"google.golang.org/api/option"
     "google.golang.org/api/iterator"
+    "github.com/rs/cors"
 )
 
 var ctx context.Context = context.Background()
@@ -26,8 +27,16 @@ func main() {
 	mux.HandleFunc("/animals", getAnimals)
 	mux.HandleFunc("/id/{id}", identify)
 
-	http.ListenAndServe(":8080", mux)
+    corsHandler := cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:5173"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Content-Type", "Authorization"},
+		AllowCredentials: true,
+	}).Handler(mux)
+
+	http.ListenAndServe(":8080", corsHandler)
 }
+
 
 func helloWorld(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Hello World!")
