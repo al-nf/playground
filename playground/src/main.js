@@ -1,4 +1,4 @@
-import { getAuth, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "firebase/auth";
 import { initializeApp } from 'firebase/app';
 
 const firebaseConfig = {
@@ -15,8 +15,33 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth();
 const provider = new GoogleAuthProvider();
 
-document.getElementById("login").addEventListener("click", () => {
-    console.log("button");
+
+const button = document.getElementById("login");
+
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    document.getElementById("msg").innerText = "Hi, " + user.displayName;
+    button.innerText = "Log Out";
+  }
+  else {
+    document.getElementById("msg").innerText = "Goodbye";
+    button.innerText = "Log In";
+  }
+})
+
+button.addEventListener("click", (e) => {
+    e.preventDefault();
+    if(auth.currentUser){
+      auth.signOut();
+    }
+    else {
+      login();
+    }
+});
+
+
+function login() {
+  console.log("button");
     signInWithPopup(auth, provider)
         .then(async (result) => {
             // This gives you a Google Access Token. You can use it to access the Google API.
@@ -26,10 +51,9 @@ document.getElementById("login").addEventListener("click", () => {
             const user = result.user;
             // IdP data available using getAdditionalUserInfo(result)
             console.log(credential,token,user);
-            document.getElementById("msg").innerText = "Hi, " + user.displayName;
+            
             const idToken = await user.getIdToken();
             sendToken(idToken);
-            // fetch()
         }).catch((error) => {
             console.log("oh naur");
             // Handle Errors here.
@@ -40,13 +64,9 @@ document.getElementById("login").addEventListener("click", () => {
             const email = error.customData.email;
             // The AuthCredential type that was used.
             const credential = GoogleAuthProvider.credentialFromError(error);
-            // ...
         });
-    });
-
+}
 async function sendToken(token) {
-  const url = "http://localhost:8080";
-
   var myHeaders = new Headers();
   myHeaders.append("Authorization", "Bearer "+token);
 
