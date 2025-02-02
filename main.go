@@ -96,6 +96,17 @@ func authenticateUser(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Failed to save user to Firestore", http.StatusInternalServerError)
 			return
 		}
+
+        _, err = userRef.Collection("stuff").Doc("test").Set(ctx, map[string]interface{}{
+            "antelope": false,
+            "bee": false,
+            "capybara": false,
+        })
+
+        if err != nil {
+			http.Error(w, "Failed to create user subcollection", http.StatusInternalServerError)
+			return
+        }
 	}
 
 	resp := map[string]interface{}{
