@@ -4,9 +4,8 @@ import (
 	"context"
 	"fmt"
     "strings"
-    json "encoding/json"
-	http "net/http"
-
+    "encoding/json"
+	"net/http"
 
 	// "cloud.google.com/go/firestore"
 	firebase "firebase.google.com/go/v4"
